@@ -1,0 +1,30 @@
+Un warehouse se encarga de: -Ejecutar consultas SQL
+                            -Cargar datos (COPY INTO)
+                            -Transformar datos (ETL/ELT)
+                            -Ejecutar tareas (tasks)
+                            -Dar servicio a herramientas conectadas (BI, dashboards, etc.)
+Se puede crear desde el menú de snowflake o con el comando CREATE WAREHOUSE warehouse_name;
+Puedes cambiar el warehouse o desde la esquina superior derecha o con el comando USE WAREHOUSE warehouse_name;
+Para ser más eficientes con los warehouses existen tamaños.
+Si quieres cambiar el tamaño del warehouse se usa el comando ALTER WARERHOUSE warehouse_name SET warehouse_size= MEDIUM; (e.g.)
+Para quitarlo es DROP WAREHOUSE warehouse_name;
+
+Un stage sirve como un puente entre la fuente de los datos y la tabla
+---> stage creation external
+CREATE OR REPLACE STAGE tasty_bytes.public.s3load
+url = 's3://sfquickstarts/frostbyte_tastybytes/'
+file_format = tasty_bytes.public.csv_ff;
+---> example of creating an internal stage
+-- CREATE OR REPLACE STAGE tasty_bytes.public.internal_stage_test; Estos son los tipos
+User stage: can only be used by that specific user. Cannot be dropped.
+Table stage: can only be used with that associated table. Cannot be dropped.
+Named stage: can be used by multiple users and associated with multiple tables
+---> country table load ejemplo del puente entre datos y tabla
+COPY INTO tasty_bytes.raw_pos.country
+FROM @tasty_bytes.public.s3load/raw_pos/country/; 
+
+Una database es el contenedor más grande donde guardas objetos de datos. Un schema es un sub-contenedor dentro de una database.
+Organiza los objetos de forma más fina. Dentro de un schema tienes: Tablas, vistas, stages...
+Piensa en un schema como una subcarpeta dentro de la carpeta principal.
+Para crear database con comando es CREATE DATABASE database_name el resto funciona igual con drop, use, show... Con los schemas igual
+Un database es un conjunto de schemas, y un schema es un conjunto de objetos.
