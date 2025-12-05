@@ -28,3 +28,38 @@ Organiza los objetos de forma más fina. Dentro de un schema tienes: Tablas, vis
 Piensa en un schema como una subcarpeta dentro de la carpeta principal.
 Para crear database con comando es CREATE DATABASE database_name el resto funciona igual con drop, use, show... Con los schemas igual
 Un database es un conjunto de schemas, y un schema es un conjunto de objetos.
+
+Las tablas se crean en los schemas. Ejemplo de como crear tabla:
+---> create a table – note that each column has a name and a data type (nombre de la variable y luego el tipo de variable)
+CREATE TABLE TEST_TABLE (
+	TEST_NUMBER NUMBER,
+	TEST_VARCHAR VARCHAR,
+	TEST_BOOLEAN BOOLEAN,
+	TEST_DATE DATE,
+	TEST_VARIANT VARIANT,
+	TEST_GEOGRAPHY GEOGRAPHY
+);
+SELECT * FROM TEST_DATABASE.TEST_SCHEMA.TEST_TABLE;  así se llama a la tabla
+
+---> insert a row into the table we just created
+INSERT INTO TEST_DATABASE.TEST_SCHEMA.TEST_TABLE
+  VALUES
+  (28, 'ha!', True, '2024-01-01', NULL, NULL);
+
+---> see all tables in a particular schema
+SHOW TABLES IN TEST_DATABASE.TEST_SCHEMA;
+
+Como crear una standart view 
+CREATE VIEW tasty_bytes.harmonized.brand_names 
+    AS
+SELECT truck_brand_name
+FROM tasty_bytes.raw_pos.menu;
+---> create a materialized view
+CREATE MATERIALIZED VIEW tasty_bytes.harmonized.brand_names_materialized 
+    AS
+SELECT DISTINCT truck_brand_name
+FROM tasty_bytes.raw_pos.menu;
+ Views are saved queries and materialized views are saved resultd of queries
+
+
+
