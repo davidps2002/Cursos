@@ -1,0 +1,154 @@
+Si aplicas SHOW TABLES hay una columna llamanda retention time que te dice los dias en los que puedes hacer time travel.
+Para cambiarlo es ALTER TABLE TASTY_BYTES.RAW_POS.TEST_MENU SET DATA_RETENTION_TIME_IN_DAYS = 90;
+
+---> record the most recent query_id, back when the data was still correct
+SET good_data_query_id = LAST_QUERY_ID();
+---> view the variable’s value
+SELECT $good_data_query_id;
+---> record the time, back when the data was still correct
+SET good_data_timestamp = CURRENT_TIMESTAMP;
+---> view the variable’s value
+SELECT $good_data_timestamp;
+
+---> select the data as of a particular timestamp  se puede hacer insertando un tiempo especifico tmb
+SELECT * FROM tasty_bytes.raw_pos.truck_dev
+AT(TIMESTAMP => $good_data_timestamp);
+
+---> select the data as of a particular number of seconds back in time
+SELECT * FROM tasty_bytes.raw_pos.truck_dev
+AT(OFFSET => -45);
+
+---> select the data as of its state before a previous query was run
+SELECT * FROM tasty_bytes.raw_pos.truck_dev
+BEFORE(STATEMENT => $good_data_query_id);
+
+---> create a transient table
+CREATE TRANSIENT TABLE TASTY_BYTES.RAW_POS.TRUCK_TRANSIENT
+    CLONE TASTY_BYTES.RAW_POS.TRUCK;
+
+---> create a temporary table
+CREATE TEMPORARY TABLE TASTY_BYTES.RAW_POS.TRUCK_TEMPORARY
+    CLONE TASTY_BYTES.RAW_POS.TRUCK;
+Para estas dos tablas el retention time está entre 0 y 1.
+
+---> create a clone of the truck table  para clonar un tabla
+CREATE OR REPLACE TABLE tasty_bytes.raw_pos.truck_clone 
+    CLONE tasty_bytes.raw_pos.truck;
+
+---> create a resource monitor  Sirve para controlar y limitar los créditos que consumen los warehouses.
+CREATE RESOURCE MONITOR tasty_test_rm
+WITH 
+    CREDIT_QUOTA = 20 -- 20 credits
+    FREQUENCY = daily -- reset the monitor daily
+    START_TIMESTAMP = immediately -- begin tracking immediately
+    TRIGGERS 
+        ON 80 PERCENT DO NOTIFY -- notify accountadmins at 80%
+        ON 100 PERCENT DO SUSPEND -- suspend warehouse at 100 percent, let queries finish
+        ON 110 PERCENT DO SUSPEND_IMMEDIATE; -- suspend warehouse and cancel all queries at 110 percent
+---> assign a resource monitor to a warehouse
+ALTER WAREHOUSE tasty_de_wh SET RESOURCE_MONITOR = tasty_test_rm;
+
+Una UDF (User-Defined Function) es una función creada por el usuario en SQL para realizar una operación 
+personalizada que no viene incluida entre las funciones nativas del sistema.
+---> create the max_menu_price function
+CREATE FUNCTION max_menu_price()
+  RETURNS NUMBER(5,2)
+  AS
+  $$
+    SELECT MAX(SALE_PRICE_USD) FROM TASTY_BYTES.RAW_POS.MENU
+  $$
+  ;
+---> create a new function, but one that takes in an argument
+CREATE FUNCTION max_menu_price_converted(USD_to_new NUMBER)
+  RETURNS NUMBER(5,2)
+  AS
+  $$
+    SELECT USD_TO_NEW*MAX(SALE_PRICE_USD) FROM TASTY_BYTES.RAW_POS.MENU
+  $$
+  ;
+---> create a Python function
+CREATE FUNCTION winsorize (val NUMERIC, up_bound NUMERIC, low_bound NUMERIC)
+returns NUMERIC
+language python
+runtime_version = '3.11'
+handler = 'winsorize_py'
+AS
+$$
+def winsorize_py(val, up_bound, low_bound):
+    if val > up_bound:
+        return up_bound
+    elif val < low_bound:
+        return low_bound
+    else:
+        return val
+$$;
+Una UDTF es lo mismo pero en vez de un escalar devuelve tablas.
+---> create a user-defined table function
+CREATE FUNCTION menu_prices_above(price_floor NUMBER)
+  RETURNS TABLE (item VARCHAR, price NUMBER)
+  AS
+  $$
+    SELECT MENU_ITEM_NAME, SALE_PRICE_USD 
+    FROM TASTY_BYTES.RAW_POS.MENU
+    WHERE SALE_PRICE_USD > price_floor
+    ORDER BY 2 DESC
+  $$
+  ;
+
+Una stored procedure es código reutilizable, que puede tener lógica compleja, variables, bucles, condiciones, etc., y que puedes llamar cuando quieras. 
+La udf devuelve un solo valor, mientras esto devuelve cualquier cosa o incluso nada.
+---> create your procedure
+CREATE OR REPLACE PROCEDURE delete_old()
+RETURNS BOOLEAN
+LANGUAGE SQL
+AS
+$$
+DECLARE
+  max_ts TIMESTAMP;
+  cutoff_ts TIMESTAMP;
+BEGIN
+  max_ts := (SELECT MAX(ORDER_TS) FROM TASTY_BYTES_CLONE.RAW_POS.ORDER_HEADER);
+  cutoff_ts := (SELECT DATEADD('DAY',-180,:max_ts));
+  DELETE FROM TASTY_BYTES_CLONE.RAW_POS.ORDER_HEADER
+  WHERE ORDER_TS < :cutoff_ts;
+END;
+$$
+;
+---> run your procedure
+CALL DELETE_OLD();
+
+RBAC(role based access control) es el sistema que usa Snowflake (y muchas otras plataformas) para gestionar permisos y seguridad.
+---> create a role
+CREATE ROLE tasty_de;
+---> see what privileges this new role has
+SHOW GRANTS TO ROLE tasty_de;
+---> grant a role to a specific user
+GRANT ROLE tasty_de TO USER [username];
+---> grant the create warehouse privilege to the tasty_de role
+GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE tasty_de;
+
+Si hablan de snowpark son sentencias no-sql. Snowpark dataframes sirven en la parte de tranformacion de etl.
+# filter rows
+    #df_table = df_table.filter(col("TRUCK_BRAND_NAME") == "Freezing Point")
+# select columns
+    #df_table = df_table.select(col("MENU_ITEM_NAME"), col("ITEM_CATEGORY"))
+# filter and select at the same time (chaining)
+    #df_table = df_table.filter(
+    #    col("TRUCK_BRAND_NAME") == "Freezing Point"
+    #).select(
+    #    col("MENU_ITEM_NAME"), 
+    #    col("ITEM_CATEGORY")
+    #)
+# save your dataframe as a table!
+#df_table.write.save_as_table("TEST_DATABASE.TEST_SCHEMA.FREEZING_POINT_ITEMS", mode="append")
+
+# load data using a query through session.sql instead of through session.table
+    #df_table2 = session.sql("SELECT * FROM TASTY_BYTES.RAW_POS.MENU LIMIT 5")
+
+# you can run other commands through session.sql – even things like CREATE
+    #session.sql("""
+    #CREATE OR REPLACE TABLE TEST_DATABASE.TEST_SCHEMA.EMPTY_TABLE (
+    #col1 varchar, 
+    #col2 varchar
+    #)""").collect()
+
