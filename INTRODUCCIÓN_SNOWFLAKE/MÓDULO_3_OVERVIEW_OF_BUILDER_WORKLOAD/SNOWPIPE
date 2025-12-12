@@ -1,0 +1,50 @@
+INGESTION: How you collect data and get it into snowflake
+          - Streaming ingest: cargas los datos en tiempo real (baja latencia pero más caro) por ejemplo snowpipe
+            CREATE PIPE S3_db.public.S3_pipe AUTO_INGEST = TRUE AS
+            COPY  INTO S3_db.public.S3_table
+            FROM @S3_db.public.S3_stage;
+          - Batch ingest: cargas los datos por lotes cada cierto tiempo (más sencillo y barato pero más latencia)
+            COPY INTO frostbyte_tasty_bytes.raw_pos.menu
+            FROM @frostbyte_tasty_bytes.public.s3load/raw_pos/menu;
+          - Snowflake native connectors
+          - In-place data sharing across regions
+            CREATE DATABASE shared_data FROM SHARE data_sharing_account.data_to_share;
+
+TRANSFORMATION: Cleaning and preparing the data
+                - Snowpark dataframes
+                - Dynamic tables with incremental refreshes
+                CREATE OR REPLACE DYNAMIC TABLE ventas_por_producto
+                TARGET_LAG = '1 minute'            -- se actualiza cada 1 min
+                WAREHOUSE = compute_wh            -- el warehouse que la refresca
+                AS
+                SELECT 
+                    producto,
+                    SUM(precio) AS total_ventas
+                FROM ventas
+                GROUP BY producto;
+                - Stores procedures
+                - UDFs, UDTFs
+                - SQL
+
+ORCHESTRATION: Scheduling how and when you run specific steps in your data pipeline
+                -Streams and tasks: CREATE STREAM sales_stream
+                                    ON TABLE sales;
+                -Open-source
+OBSERVABILITY: How snowflake helps you make sure everythin's runnings as expected and debug problems
+              - Alerts, notifications, logs and events...
+
+---> create the storage integration
+CREATE OR REPLACE STORAGE INTEGRATION S3_role_integration
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = "REMOVED"
+  STORAGE_ALLOWED_LOCATIONS = ("s3://intro-to-snowflake-snowpipe/");
+---> create the snowpipe, copying from S3_stage into S3_table Snowpipe es el servicio de ingestión continua de Snowflake.
+                                                              Sirve para cargar datos automáticamente en Snowflake en cuanto llegan a
+                                                              tu stage (S3, GCS, Azure Blob).
+CREATE PIPE S3_db.public.S3_pipe AUTO_INGEST=TRUE as
+  COPY INTO S3_db.public.S3_table
+  FROM @S3_db.public.S3_stage;
+
+
