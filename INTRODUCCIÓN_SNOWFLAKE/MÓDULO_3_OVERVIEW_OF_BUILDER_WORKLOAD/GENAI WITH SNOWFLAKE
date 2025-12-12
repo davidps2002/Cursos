@@ -1,0 +1,32 @@
+These three are use AI in seconds
+DOCUMENT AI: it's a feature that lets you use a snowflake LLM managed in Cortex to extract data from unstructured documents like PDFs
+UNIVERSAL SEARCH: it lets you use natural language to search for a bunch of things: database objects in your account, docs...
+SNOWFLAKE COPILOT: its LLM empowered and generates SQL from natural language queries
+
+This one is apps in minutes
+STREAMLIT: a really sleek way to take python scripts and deploy them as data apps
+
+Estas cuatro están dentro de lsnowflake cortex. 
+Cuatro de los Cortex LLM functions son: 
+-Summarize: execute fast summarization tasks that dont require customization  SELECT SNOWFLAKE.CORTEX.SUMMARIZE(content)
+                                                                              FROM reviews;
+-Sentiment: detect customer sentiment (positive, neutral, negative)  SELECT SNOWFLAKE.CORTEX.SENTIMENT(content),
+                                                                      content
+                                                                      FROM reviews;
+-Extract_Answer: extract information from unstructured data in a Q&A format  
+                                                           SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(review_content,
+                                                           'What dishes does this review mention?') 
+                                                            FROM reviews;
+-Translate: fast and continually improving translations from supported languages
+                                                          SELECT SNOWFLAKE.CORTEX.TRANSLATE(review_content, 'en', 'de')
+                                                          FROM reviews;
+-Complete: te da una respuesta al prompt que es el segundo argumento con el modelo que es el primer argumento
+                                                  ---> use the mistral-7b model and Snowflake Cortex Complete to ask a question
+                                                  SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                                                'mistral-7b', 'What are three reasons that Snowflake is positioned to become the go-to data platform?');
+
+                                                ---> run Snowflake Cortex Complete on multiple rows at once
+                                                SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                                                    'mistral-7b',
+                                                        CONCAT('Tell me why this food is tasty: ', menu_item_name)
+                                                ) FROM FROSTBYTE_TASTY_BYTES.RAW_POS.MENU LIMIT 5;
