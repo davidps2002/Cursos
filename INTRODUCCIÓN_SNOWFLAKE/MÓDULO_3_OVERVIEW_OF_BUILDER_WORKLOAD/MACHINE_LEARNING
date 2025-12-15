@@ -1,0 +1,25 @@
+# split the data into a training set and a test set
+train_snowpark_df, test_snowpark_df = snowpark_df_prepared.randomSplit([0.9, 0.1])
+
+# save training data
+train_snowpark_df.write.mode("overwrite").save_as_table("df_clean_train")
+
+# save test data
+test_snowpark_df.write.mode("overwrite").save_as_table("df_clean_test")
+
+# create and train the XGBClassifier model
+FEATURE_COLS = ["MONTH", "DAY"]
+LABEL_COLS = ["NEIGHBORHOOD2"]
+
+# Train an XGBoost model on snowflake.
+xgboost_model = XGBClassifier(
+    input_cols=FEATURE_COLS,
+    label_cols=LABEL_COLS
+)
+
+xgboost_model.fit(train_snowpark_df)
+
+# check the accuracy using scikit-learn's score functionality through Snowpark ML
+accuracy = xgboost_model.score(test_snowpark_df)
+
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
