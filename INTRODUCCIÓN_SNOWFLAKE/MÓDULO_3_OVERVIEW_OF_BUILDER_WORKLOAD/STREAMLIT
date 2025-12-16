@@ -1,0 +1,19 @@
+Streamlit is an open source framework that lets you create dynamic data applications with just a few lines of python code.
+# Import Python Packages
+
+import pandas as pd
+import streamlit as st
+from snowflake.snowpark.context import get_active_session
+import altair as alt
+
+# Get the Current Credentials
+session = get_active_session()
+
+# Streamlit App
+st.title(":snowflake: Tasty Bytes Streamlit App :snowflake:")  #para poner titulo
+st.write(
+    """Tasty Bytes is a fictitious, global food truck network, that is on a mission to serve unique food options with high quality items in a safe, convenient and cost effective way. In order to drive
+forward on their mission, Tasty Bytes is beginning to leverage the Snowflake Data Cloud.
+    """
+)
+st.divider()   #para poner una linea divisoria
