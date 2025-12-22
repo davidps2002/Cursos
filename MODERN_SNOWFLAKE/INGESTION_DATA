@@ -1,1 +1,15 @@
+Hay dos tipos de data ingestion en snowflake, batch ingestion y streaming ingestion.
+Batch ingestion: data processed in large, discrete chunks at scheduled intervals (not always)
+Streaming ingestion: continuous, real-time ingestion
+Nos centramos en batch ingestion que son 3 pasos:
+   - Prepare your data files
+   - Stage the data files (cloud)
+   - Perfom the ingestion, with SQL, Python or other relevant method
+Snowflake marketplace, snowflake web interface, snowflake CLI, COPY INTO command (métodos para subir datos)
 
+1. SNOWFLAKE MARKETPLACE: Snowflake Marketplace es un catálogo de datos y apps listos para usar dentro de Snowflake.
+Buscas un producto, lo añades con “Get”, aceptas los términos y se crea automáticamente una base de datos o app en tu cuenta.
+
+2. SNOWFLAKE WEB INTERFACE: En la interfaz web de Snowflake (Snowsight) vas a Data → Add Data.
+Subes archivos (CSV, JSON, Parquet) o conectas una fuente externa y Snowflake crea las tablas.
+Una vez cargados, los datos quedan disponibles para consultar y transformar con SQL.
