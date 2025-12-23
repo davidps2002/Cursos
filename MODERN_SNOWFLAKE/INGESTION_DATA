@@ -13,3 +13,11 @@ Buscas un producto, lo añades con “Get”, aceptas los términos y se crea au
 2. SNOWFLAKE WEB INTERFACE: En la interfaz web de Snowflake (Snowsight) vas a Data → Add Data.
 Subes archivos (CSV, JSON, Parquet) o conectas una fuente externa y Snowflake crea las tablas.
 Una vez cargados, los datos quedan disponibles para consultar y transformar con SQL.
+
+Un Virtual Warehouse (en Snowflake) es el recurso de cómputo que ejecuta las consultas SQL: no almacena datos, solo procesa.
+Nodos: son las máquinas virtuales que componen el warehouse.
+Más nodos = más potencia total.
+Threads (hilos): son las unidades de ejecución dentro de cada nodo.
+Permiten que un nodo ejecute varias tareas en paralelo.
+
+3. COPY INTO: Define target table, define a file format, define an external stage, write and execute copy into command 
