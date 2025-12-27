@@ -2,3 +2,4 @@ You use data transformations on your raw data to get closer to cleaned and integ
 The most typical transformations are: missing or incorrect data, fixec formatting, perfom aggregations, derive new columns...
 The two most common methods are SQL or Snowpark. Con Snowpark puedes usar python, java o scala.
 Se pueden usar user-defined functions para reusar codigo o funciones que usas recurrentemente. UDF devuelven solo un valor.
+Lo mismo con stored procedures y dynamic tables.
