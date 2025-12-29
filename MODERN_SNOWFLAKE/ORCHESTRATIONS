@@ -1,0 +1,2 @@
+Data ingestion processes, data tranformations, streams for incremental data processing can be automated.
+Task is a scheduled operation, hay dos tipos, user-managed and serveless. 
